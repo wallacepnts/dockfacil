@@ -7,9 +7,13 @@ BASE_VOLUME="/opt/docker-volumes"
 echo "📦 Baixando arquivos docker-compose..."
 mkdir -p "$APPS_DIR"
 
-APPS=("actual" "deluge" "portainer")
+APPS=$(cat <<EOF
+actual
+deluge
+EOF
+)
 
-for app in "${APPS[@]}"; do
+for app in $APPS; do
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
