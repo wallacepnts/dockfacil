@@ -11,8 +11,8 @@ mkdir -p "$APPS_DIR"
 if [ ! -f "$APPS_DIR/actual.yml" ]; then
   curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/actual.yml -o "$APPS_DIR/actual.yml"
 fi
-if [ ! -f "$APPS_DIR/portainer.yml" ]; then
-  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/portainer.yml -o "$APPS_DIR/portainer.yml"
+if [ ! -f "$APPS_DIR/deluge.yml" ]; then
+  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/deluge.yml -o "$APPS_DIR/deluge.yml"
 fi
 
 echo "=== Instalador Docker Interativo ==="
