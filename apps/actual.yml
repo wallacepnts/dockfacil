@@ -1,0 +1,20 @@
+services:
+  actual:
+    image: docker.io/actualbudget/actual-server:latest
+    container_name: actual
+    labels:
+      tsdproxy.enable: true
+      tsdproxy.name: actual
+      tsdproxy.dash.label: Actual Budget
+      tsdproxy.dash.icon: sh/actual-budget-light
+    ports:
+      - '5006:5006'
+    volumes:
+      - ${DOCKER_VOLUME}:/data
+    restart: unless-stopped
+    networks:
+      - actual
+
+networks:
+  actual:
+    name: actual

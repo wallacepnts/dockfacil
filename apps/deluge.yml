@@ -1,0 +1,28 @@
+services:
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    labels:
+      tsdproxy.enable: true
+      tsdproxy.name: deluge
+      tsdproxy.dash.label: Deluge
+      tsdproxy.container_port: 8112
+      tsdproxy.dash.icon: sh/deluge-light
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+    volumes:
+      - ${DOCKER_VOLUME}:/config
+      - ${DOWNLOADS}:/downloads
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    networks:
+      - deluge
+
+networks:
+  actual:
+    name: deluge
