@@ -3,12 +3,16 @@ set -euo pipefail
 
 APPS_DIR="./apps"
 BASE_VOLUME="/opt/docker-volumes"
-CSV_FILE="https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/apps.csv"
+CSV_URL="https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/apps.csv"
+CSV_FILE="$APPS_DIR/apps.csv"
 
 echo "📦 Baixando arquivos docker-compose..."
 mkdir -p "$APPS_DIR"
 
-# Baixa arquivos docker-compose conforme o CSV
+# Baixa o CSV para a pasta apps
+curl -fsSL "$CSV_URL" -o "$CSV_FILE"
+
+# Baixa os arquivos docker-compose conforme o CSV (pulando a primeira linha)
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
@@ -20,16 +24,18 @@ echo
 echo "=== 🚀 DockFácil - Instalador Docker Interativo ==="
 echo
 
-declare -a AVAILABLE_APPS
-declare -a AVAILABLE_LABELS
+# Inicializa arrays
+AVAILABLE_APPS=()
+AVAILABLE_LABELS=()
 
-i=1
-tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
+# Ler CSV e preencher arrays
+while IFS=',' read -r app label; do
   AVAILABLE_APPS+=("$app")
   AVAILABLE_LABELS+=("$label")
-done
+done < <(tail -n +2 "$CSV_FILE")
 
-for (( idx=0; idx<${#AVAILABLE_APPS[@]}; idx++ )); do
+# Mostrar opções
+for (( idx=0; idx < ${#AVAILABLE_APPS[@]}; idx++ )); do
   echo "$((idx+1))) ${AVAILABLE_LABELS[$idx]}"
 done
 
