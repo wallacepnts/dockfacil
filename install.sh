@@ -3,6 +3,7 @@ set -euo pipefail
 
 APPS_DIR="./apps"
 BASE_VOLUME="/opt/docker-volumes"
+INSTALLED_COUNT=0
 
 echo "📦 Baixando arquivos docker-compose..."
 mkdir -p "$APPS_DIR"
@@ -69,7 +70,6 @@ for index in "${selections[@]}"; do
 
   if docker ps -a --format '{{.Names}}' | grep -q "^$container_name\$"; then
     echo "⚠️  O container \"$container_name\" já existe."
-
     read -rp "❓ Deseja recriar o container \"$container_name\"? (s/N): " confirm < /dev/tty
     if [[ ! "$confirm" =~ ^[sS]$ ]]; then
       echo "⏩ Pulando $app..."
@@ -82,7 +82,12 @@ for index in "${selections[@]}"; do
 
   echo "📥 Instalando $app..."
   docker compose -f "$APPS_DIR/$app.yml" up -d
+  ((INSTALLED_COUNT++))
 done
 
 echo
-echo "✅ Instalação concluída com sucesso!"
+if (( INSTALLED_COUNT > 0 )); then
+  echo "✅ Instalação concluída com sucesso!"
+else
+  echo "ℹ️ Nenhum aplicativo foi instalado."
+fi
