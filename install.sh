@@ -6,14 +6,16 @@ BASE_VOLUME="/opt/docker-volumes"
 CSV_URL="https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/apps.csv"
 CSV_FILE="$APPS_DIR/apps.csv"
 
-echo "📦 Baixando arquivos docker-compose..."
+echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
 
-# Baixa o CSV para a pasta apps
+# Baixa o CSV para dentro da pasta apps
 curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
-# Baixa os arquivos docker-compose conforme o CSV (pulando a primeira linha)
+# Baixa os docker-compose se não existirem, lendo do CSV
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
+  app=$(echo "$app" | xargs)       # tira espaços
+  label=$(echo "$label" | xargs)   # tira espaços
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
@@ -24,19 +26,24 @@ echo
 echo "=== 🚀 DockFácil - Instalador Docker Interativo ==="
 echo
 
-# Inicializa arrays
 AVAILABLE_APPS=()
 AVAILABLE_LABELS=()
 
-# Ler CSV e preencher arrays
+# Lê o CSV e popula as listas
 while IFS=',' read -r app label; do
+  # Ignora a linha do cabeçalho
+  if [[ "$app" == "app" ]]; then
+    continue
+  fi
+  app=$(echo "$app" | xargs)
+  label=$(echo "$label" | xargs)
   AVAILABLE_APPS+=("$app")
   AVAILABLE_LABELS+=("$label")
-done < <(tail -n +2 "$CSV_FILE")
+done < "$CSV_FILE"
 
-# Mostrar opções
-for (( idx=0; idx < ${#AVAILABLE_APPS[@]}; idx++ )); do
-  echo "$((idx+1))) ${AVAILABLE_LABELS[$idx]}"
+# Mostra as opções para o usuário
+for i in "${!AVAILABLE_APPS[@]}"; do
+  echo "$((i+1))) ${AVAILABLE_LABELS[$i]}"
 done
 
 echo
@@ -61,13 +68,14 @@ for index in "${selections[@]}"; do
   fi
 
   app="${AVAILABLE_APPS[$((index-1))]}"
+  label="${AVAILABLE_LABELS[$((index-1))]}"
   export DOCKER_VOLUME="$BASE_VOLUME/$app"
 
   echo
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  echo "📥 Instalando ${AVAILABLE_LABELS[$((index-1))]}..."
+  echo "📥 Instalando $label..."
   docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
 done
 
