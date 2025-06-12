@@ -40,7 +40,7 @@ fi
 
 echo
 selections=()
-read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections
+read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections < /dev/tty
 
 if [ "${#selections[@]}" -eq 0 ]; then
   echo "⚠️  Você não selecionou nenhum app. Abortando."
