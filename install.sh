@@ -3,7 +3,7 @@ set -euo pipefail
 
 APPS_DIR="./apps"
 BASE_VOLUME="/opt/docker-volumes"
-CSV_FILE="$APPS_DIR/apps.csv"
+CSV_FILE="https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/apps.csv"
 
 echo "📦 Baixando arquivos docker-compose..."
 mkdir -p "$APPS_DIR"
