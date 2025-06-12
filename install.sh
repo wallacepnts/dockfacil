@@ -75,13 +75,17 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  # Verifica se já existe container relacionado ao app (nome contendo o nome do app, case insensitive)
-  if docker ps -a --format '{{.Names}}' | grep -iq "$app"; then
-    read -rp "⚠️  O container relacionado a \"$app\" já existe. Deseja recriar o container \"$app\"? (s/N): " answer
+  # Pega a lista dos containers que contenham o nome do app
+  containers=$(docker ps -a --format '{{.Names}}' | grep -i "$app" || true)
+
+  if [[ -n "$containers" ]]; then
+    echo "⚠️ Foram encontrados containers relacionados a \"$app\":"
+    echo "$containers"
+    read -rp "Deseja remover esses containers e reinstalar \"$label\"? (s/N): " answer
     case "$answer" in
       [Ss]* )
-        echo "🔄 Removendo container relacionado a $app..."
-        docker ps -a --format '{{.Names}}' | grep -i "$app" | xargs -r docker rm -f
+        echo "🔄 Removendo containers relacionados a $app..."
+        echo "$containers" | xargs -r docker rm -f
         echo "📥 Instalando $label..."
         docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
         ;;
