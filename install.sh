@@ -14,8 +14,8 @@ curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
 # Baixa os docker-compose se não existirem, lendo do CSV
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
-  app=$(echo "$app" | xargs)       # tira espaços
-  label=$(echo "$label" | xargs)   # tira espaços
+  app=$(echo "$app" | xargs)
+  label=$(echo "$label" | xargs)
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
@@ -31,7 +31,6 @@ AVAILABLE_LABELS=()
 
 # Lê o CSV e popula as listas
 while IFS=',' read -r app label; do
-  # Ignora a linha do cabeçalho
   if [[ "$app" == "app" ]]; then
     continue
   fi
@@ -75,39 +74,20 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  # Verifica se já existe container em execução com o nome do app
-  running_container=$(docker ps --format '{{.Names}}' | grep -i "^$app\$" || true)
-  existing_container=$(docker ps -a --format '{{.Names}}' | grep -i "^$app\$" || true)
-
-  if [[ -n "$running_container" ]]; then
-    echo "⚠️ O container \"$app\" já está em execução."
-    read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer
-    case "$answer" in
-      [Ss]* )
-        echo "🔄 Reinstalando $label..."
-        docker rm -f "$app"
-        docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
-        ;;
-      * )
-        echo "⏩ Pulando $app..."
-        ;;
-    esac
-  elif [[ -n "$existing_container" ]]; then
-    echo "⚠️ O container \"$app\" existe, mas não está rodando."
-    read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer
-    case "$answer" in
-      [Ss]* )
-        echo "🔄 Iniciando/reinstalando $label..."
-        docker rm -f "$app" || true
-        docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
-        ;;
-      * )
-        echo "⏩ Pulando $app..."
-        ;;
-    esac
+  if docker ps -a --format '{{.Names}}' | grep -q "^$app\$"; then
+    echo "⚠️ O container \"$app\" já existe."
+    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " answer < /dev/tty
+    if [[ "$answer" =~ ^[sS]$ ]]; then
+      docker compose -f "$APPS_DIR/$app.yml" down
+      docker compose -f "$APPS_DIR/$app.yml" up -d
+      ((installed_count++))
+    else
+      echo "⏩ Pulando $app..."
+    fi
   else
     echo "📥 Instalando $label..."
-    docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
+    docker compose -f "$APPS_DIR/$app.yml" up -d
+    ((installed_count++))
   fi
 done
 
