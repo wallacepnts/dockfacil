@@ -65,6 +65,21 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
+  container_name=$(docker compose -f "$APPS_DIR/$app.yml" config --services | head -n1)
+
+  if docker ps -a --format '{{.Names}}' | grep -q "^$container_name\$"; then
+    echo "⚠️  O container \"$container_name\" já existe."
+
+    read -rp "❓ Deseja recriar o container \"$container_name\"? (s/N): " confirm < /dev/tty
+    if [[ ! "$confirm" =~ ^[sS]$ ]]; then
+      echo "⏩ Pulando $app..."
+      continue
+    fi
+
+    echo "🧹 Removendo container antigo..."
+    docker compose -f "$APPS_DIR/$app.yml" down
+  fi
+
   echo "📥 Instalando $app..."
   docker compose -f "$APPS_DIR/$app.yml" up -d
 done
