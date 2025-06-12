@@ -86,8 +86,10 @@ for index in "${selections[@]}"; do
 done
 
 echo
-if (( INSTALLED_COUNT > 0 )); then
-  echo "✅ Instalação concluída com sucesso!"
+if (( INSTALLED_COUNT == 1 )); then
+  echo "✅ 1 aplicativo instalado com sucesso!"
+elif (( INSTALLED_COUNT > 1 )); then
+  echo "✅ $INSTALLED_COUNT aplicativos instalados com sucesso!"
 else
   echo "ℹ️ Nenhum aplicativo foi instalado."
 fi
