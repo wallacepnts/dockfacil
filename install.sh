@@ -8,18 +8,19 @@ CSV_FILE="$APPS_DIR/apps.csv"
 
 echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
+
+# Baixa o CSV
 curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
-# Baixa os docker-compose
-while IFS=',' read -r app label; do
-  [[ "$app" == "app" ]] && continue
+# Baixa os docker-compose se não existirem
+tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
   app=$(echo "$app" | xargs)
   label=$(echo "$label" | xargs)
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
   fi
-done < "$CSV_FILE"
+done
 
 echo
 echo "=== 🚀 DockFácil - Instalador Docker Interativo ==="
@@ -41,7 +42,7 @@ for i in "${!AVAILABLE_APPS[@]}"; do
 done
 
 echo
-read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections < /dev/tty
+read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections
 
 if [ "${#selections[@]}" -eq 0 ]; then
   echo "⚠️ Você não selecionou nenhum app. Abortando."
@@ -51,8 +52,13 @@ fi
 installed_count=0
 
 for index in "${selections[@]}"; do
-  if ! [[ "$index" =~ ^[0-9]+$ ]] || (( index < 1 || index > ${#AVAILABLE_APPS[@]} )); then
+  if ! [[ "$index" =~ ^[0-9]+$ ]]; then
     echo "❌ Seleção inválida: $index. Pulando."
+    continue
+  fi
+
+  if (( index < 1 || index > ${#AVAILABLE_APPS[@]} )); then
+    echo "❌ Número fora do intervalo: $index. Pulando."
     continue
   fi
 
@@ -64,25 +70,25 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  if docker ps -a --format '{{.Names}}' | grep -q "^$app\$"; then
+  # Verifica se container existe
+  if docker ps -a --format '{{.Names}}' | grep -q "^$app$"; then
     echo "⚠️ O container \"$app\" já existe."
-    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " answer < /dev/tty
+    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " answer
     if [[ "$answer" =~ ^[sS]$ ]]; then
       docker compose -f "$APPS_DIR/$app.yml" down
-      docker compose -f "$APPS_DIR/$app.yml" up -d
-      ((installed_count++))
+      docker compose -f "$APPS_DIR/$app.yml" up -d && installed_count=$((installed_count+1))
     else
       echo "⏩ Pulando $app..."
     fi
   else
     echo "📥 Instalando $label..."
-    docker compose -f "$APPS_DIR/$app.yml" up -d
-    ((installed_count++))
+    docker compose -f "$APPS_DIR/$app.yml" up -d && installed_count=$((installed_count+1))
   fi
 done
 
 echo
 
+# Mensagem final
 if (( installed_count == 0 )); then
   echo "⚠️ Nenhum aplicativo foi instalado."
 elif (( installed_count == 1 )); then
