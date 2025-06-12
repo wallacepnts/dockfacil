@@ -8,19 +8,18 @@ CSV_FILE="$APPS_DIR/apps.csv"
 
 echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
-
-# Baixa o CSV para dentro da pasta apps
 curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
-# Baixa os docker-compose se não existirem, lendo do CSV
-tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
+# Baixa os docker-compose
+while IFS=',' read -r app label; do
+  [[ "$app" == "app" ]] && continue
   app=$(echo "$app" | xargs)
   label=$(echo "$label" | xargs)
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
   fi
-done
+done < "$CSV_FILE"
 
 echo
 echo "=== 🚀 DockFácil - Instalador Docker Interativo ==="
@@ -29,18 +28,14 @@ echo
 AVAILABLE_APPS=()
 AVAILABLE_LABELS=()
 
-# Lê o CSV e popula as listas
 while IFS=',' read -r app label; do
-  if [[ "$app" == "app" ]]; then
-    continue
-  fi
+  [[ "$app" == "app" ]] && continue
   app=$(echo "$app" | xargs)
   label=$(echo "$label" | xargs)
   AVAILABLE_APPS+=("$app")
   AVAILABLE_LABELS+=("$label")
 done < "$CSV_FILE"
 
-# Mostra as opções para o usuário
 for i in "${!AVAILABLE_APPS[@]}"; do
   echo "$((i+1))) ${AVAILABLE_LABELS[$i]}"
 done
@@ -56,13 +51,8 @@ fi
 installed_count=0
 
 for index in "${selections[@]}"; do
-  if ! [[ "$index" =~ ^[0-9]+$ ]]; then
+  if ! [[ "$index" =~ ^[0-9]+$ ]] || (( index < 1 || index > ${#AVAILABLE_APPS[@]} )); then
     echo "❌ Seleção inválida: $index. Pulando."
-    continue
-  fi
-
-  if (( index < 1 || index > ${#AVAILABLE_APPS[@]} )); then
-    echo "❌ Número fora do intervalo: $index. Pulando."
     continue
   fi
 
