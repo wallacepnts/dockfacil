@@ -7,16 +7,14 @@ BASE_VOLUME="/opt/docker-volumes"
 echo "📦 Baixando arquivos docker-compose..."
 mkdir -p "$APPS_DIR"
 
-# Baixa os arquivos se não existirem
-if [ ! -f "$APPS_DIR/actual.yml" ]; then
-  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/actual.yml -o "$APPS_DIR/actual.yml"
-fi
-if [ ! -f "$APPS_DIR/deluge.yml" ]; then
-  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/deluge.yml -o "$APPS_DIR/deluge.yml"
-fi
-if [ ! -f "$APPS_DIR/portainer.yml" ]; then
-  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/portainer.yml -o "$APPS_DIR/portainer.yml"
-fi
+APPS=("actual" "deluge" "portainer")
+
+for app in "${APPS[@]}"; do
+  file="$APPS_DIR/$app.yml"
+  if [ ! -f "$file" ]; then
+    curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
+  fi
+done
 
 echo
 echo "=== 🚀 DockFácil - Instalador Docker Interativo ==="
