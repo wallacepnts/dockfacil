@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -euo pipefail
 
 APPS_DIR="/tmp/apps"
@@ -8,8 +7,8 @@ BASE_VOLUME="/opt/docker-volumes"
 if [ ! -d "$APPS_DIR" ]; then
   echo "Baixando arquivos docker-compose..."
   mkdir -p "$APPS_DIR"
-  curl -fsSL https://seusite.com/apps/actual.yml -o "$APPS_DIR/actual.yml"
-  curl -fsSL https://seusite.com/apps/portainer.yml -o "$APPS_DIR/portainer.yml"
+  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/actual.yml -o "$APPS_DIR/actual.yml"
+  curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/portainer.yml -o "$APPS_DIR/portainer.yml"
 fi
 
 echo "=== Instalador Docker Interativo ==="
@@ -24,11 +23,33 @@ for file in "$APPS_DIR"/*.yml; do
   ((i++))
 done
 
+if [ ${#AVAILABLE_APPS[@]} -eq 0 ]; then
+  echo "Nenhum app disponível para instalar. Abortando."
+  exit 1
+fi
+
 echo
 read -p "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections
+
+if [ ${#selections[@]} -eq 0 ]; then
+  echo "Nenhuma seleção feita. Abortando."
+  exit 1
+fi
+
 echo
 
 for index in "${selections[@]}"; do
+  # Verifica se índice é número válido
+  if ! [[ "$index" =~ ^[0-9]+$ ]]; then
+    echo "Seleção inválida: $index. Pulando."
+    continue
+  fi
+
+  if [ "$index" -lt 1 ] || [ "$index" -gt "${#AVAILABLE_APPS[@]}" ]; then
+    echo "Número fora do intervalo: $index. Pulando."
+    continue
+  fi
+
   app="${AVAILABLE_APPS[$((index-1))]}"
   export DOCKER_VOLUME="$BASE_VOLUME/$app"
 
