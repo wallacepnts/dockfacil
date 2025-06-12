@@ -9,8 +9,10 @@ CSV_FILE="$APPS_DIR/apps.csv"
 echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
 
+# Baixa o CSV para dentro da pasta apps
 curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
+# Baixa os docker-compose se não existirem, lendo do CSV
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
   app=$(echo "$app" | xargs)       # tira espaços
   label=$(echo "$label" | xargs)   # tira espaços
@@ -27,8 +29,9 @@ echo
 AVAILABLE_APPS=()
 AVAILABLE_LABELS=()
 
+# Lê o CSV e popula as listas
 while IFS=',' read -r app label; do
-
+  # Ignora a linha do cabeçalho
   if [[ "$app" == "app" ]]; then
     continue
   fi
@@ -38,17 +41,13 @@ while IFS=',' read -r app label; do
   AVAILABLE_LABELS+=("$label")
 done < "$CSV_FILE"
 
+# Mostra as opções para o usuário
 for i in "${!AVAILABLE_APPS[@]}"; do
   echo "$((i+1))) ${AVAILABLE_LABELS[$i]}"
 done
 
 echo
-
-selections=()
-
-echo -n "Digite os números dos apps que deseja instalar (ex: 1 3): "
-read -r input
-IFS=' ' read -r -a selections <<< "$input"
+read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections < /dev/tty || true
 
 if [ "${#selections[@]}" -eq 0 ]; then
   echo "⚠️ Você não selecionou nenhum app. Abortando."
@@ -76,18 +75,16 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
+  # Verifica se container existe
   if docker ps -a --format '{{.Names}}' | grep -qw "$app"; then
     echo "⚠️ O container \"$app\" já existe."
-    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " yn
-    case "$yn" in
-      [Ss]* )
-        docker compose -f "$APPS_DIR/$app.yml" down
-        docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
-        ;;
-      * )
-        echo "⏩ Pulando $app..."
-        ;;
-    esac
+    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " answer < /dev/tty
+    if [[ "$answer" =~ ^[Ss]$ ]]; then
+      docker compose -f "$APPS_DIR/$app.yml" down
+      docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
+    else
+      echo "⏩ Pulando $app..."
+    fi
   else
     echo "📥 Instalando $label..."
     docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
