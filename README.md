@@ -15,10 +15,10 @@ curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/install.
 
 ## 📦 Aplicativos disponíveis
 
-| Logo | Aplicativo  | Descrição |
-| :---: | :--- | :--- |
-| <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/actual-budget.png" width="64" /> | [1 - Actual Budget](https://github.com/actualbudget/actual)  | Aplicativo rápido e focado na privacidade para gerenciar suas finanças pessoais, usando a metodologia de Orçamento de Envelope. |
-| <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/deluge.png" width="64" /> | [2 - Deluge](https://deluge-torrent.org/) | Cliente BitTorrent leve e poderoso para download e gerenciamento de torrents. |
+| Seleção | Logo | Aplicativo  | Descrição |
+| :---: | :--- | :--- | :--- |
+| 1 | <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/actual-budget.png" width="64" /> | [Actual Budget](https://github.com/actualbudget/actual)  | Aplicativo rápido e focado na privacidade para gerenciar suas finanças pessoais, usando a metodologia de Orçamento de Envelope. |
+| 2 | <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/deluge.png" width="64" /> | [Deluge](https://deluge-torrent.org/) | Cliente BitTorrent leve e poderoso para download e gerenciamento de torrents. |
 
 
 ---
