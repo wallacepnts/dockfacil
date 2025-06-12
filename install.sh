@@ -41,8 +41,9 @@ for i in "${!AVAILABLE_APPS[@]}"; do
   echo "$((i+1))) ${AVAILABLE_LABELS[$i]}"
 done
 
-echo
-read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections
+echo -n "Digite os números dos apps que deseja instalar (ex: 1 3): "
+read -r input
+IFS=' ' read -r -a selections <<< "$input" #mudança
 
 if [ "${#selections[@]}" -eq 0 ]; then
   echo "⚠️ Você não selecionou nenhum app. Abortando."
