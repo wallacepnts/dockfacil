@@ -17,9 +17,9 @@ curl -fsSL https://raw.githubusercontent.com/wallacepnts/dockfacil/main/install.
 
 | Logo | Aplicativo  | Descrição |
 | :---: | :--- | :--- |
-| ![Actual Budget](https://cdn.jsdelivr.net/gh/selfhst/icons/png/actual-budget.png) | [1 - Actual Budget](https://github.com/actualbudget/actual)  | Aplicativo rápido e focado na privacidade para gerenciar suas finanças pessoais, usando a metodologia de Orçamento de Envelope. |
-| ![Deluge](https://cdn.jsdelivr.net/gh/selfhst/icons/png/deluge.png) | [2 - Deluge](https://deluge-torrent.org/) | Cliente BitTorrent leve e poderoso para download e gerenciamento de torrents. |
-| ![Portainer](https://cdn.jsdelivr.net/gh/selfhst/icons/png/portainer.png) | [3 - Portainer](https://www.portainer.io/) | Interface web para gerenciamento simplificado dos seus containers Docker. |
+| <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/actual-budget.png" width="64" /> | [1 - Actual Budget](https://github.com/actualbudget/actual)  | Aplicativo rápido e focado na privacidade para gerenciar suas finanças pessoais, usando a metodologia de Orçamento de Envelope. |
+| <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/deluge.png" width="64" /> | [2 - Deluge](https://deluge-torrent.org/) | Cliente BitTorrent leve e poderoso para download e gerenciamento de torrents. |
+
 
 ---
 
