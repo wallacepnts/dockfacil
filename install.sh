@@ -75,18 +75,30 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  # Pega a lista dos containers que contenham o nome do app
-  containers=$(docker ps -a --format '{{.Names}}' | grep -i "$app" || true)
+  # Verifica se já existe container em execução com o nome do app
+  running_container=$(docker ps --format '{{.Names}}' | grep -i "^$app\$" || true)
+  existing_container=$(docker ps -a --format '{{.Names}}' | grep -i "^$app\$" || true)
 
-  if [[ -n "$containers" ]]; then
-    echo "⚠️ Foram encontrados containers relacionados a \"$app\":"
-    echo "$containers"
-    read -rp "Deseja remover esses containers e reinstalar \"$label\"? (s/N): " answer
+  if [[ -n "$running_container" ]]; then
+    echo "⚠️ O container \"$app\" já está em execução."
+    read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer
     case "$answer" in
       [Ss]* )
-        echo "🔄 Removendo containers relacionados a $app..."
-        echo "$containers" | xargs -r docker rm -f
-        echo "📥 Instalando $label..."
+        echo "🔄 Reinstalando $label..."
+        docker rm -f "$app"
+        docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
+        ;;
+      * )
+        echo "⏩ Pulando $app..."
+        ;;
+    esac
+  elif [[ -n "$existing_container" ]]; then
+    echo "⚠️ O container \"$app\" existe, mas não está rodando."
+    read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer
+    case "$answer" in
+      [Ss]* )
+        echo "🔄 Iniciando/reinstalando $label..."
+        docker rm -f "$app" || true
         docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
         ;;
       * )
