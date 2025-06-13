@@ -9,13 +9,11 @@ CSV_FILE="$APPS_DIR/apps.csv"
 echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
 
-# Baixa o CSV para dentro da pasta apps
 curl -fsSL "$CSV_URL" -o "$CSV_FILE"
 
-# Baixa os docker-compose se não existirem, lendo do CSV
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
-  app=$(echo "$app" | xargs)       # tira espaços
-  label=$(echo "$label" | xargs)   # tira espaços
+  app=$(echo "$app" | xargs)
+  label=$(echo "$label" | xargs)
   file="$APPS_DIR/$app.yml"
   if [ ! -f "$file" ]; then
     curl -fsSL "https://raw.githubusercontent.com/wallacepnts/dockfacil/main/apps/$app.yml" -o "$file"
@@ -29,9 +27,8 @@ echo
 AVAILABLE_APPS=()
 AVAILABLE_LABELS=()
 
-# Lê o CSV e popula as listas
 while IFS=',' read -r app label; do
-  # Ignora a linha do cabeçalho
+
   if [[ "$app" == "app" ]]; then
     continue
   fi
@@ -41,16 +38,15 @@ while IFS=',' read -r app label; do
   AVAILABLE_LABELS+=("$label")
 done < "$CSV_FILE"
 
-# Mostra as opções para o usuário
 for i in "${!AVAILABLE_APPS[@]}"; do
   echo "$((i+1))) ${AVAILABLE_LABELS[$i]}"
 done
 
 echo
-read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections < /dev/tty || true
+read -rp "Digite os números dos apps que deseja instalar (ex: 1 3): " -a selections < /dev/tty
 
 if [ "${#selections[@]}" -eq 0 ]; then
-  echo "⚠️ Você não selecionou nenhum app. Abortando."
+  echo "⚠️ Você não selecionou nenhum app."
   exit 1
 fi
 
@@ -58,12 +54,12 @@ installed_count=0
 
 for index in "${selections[@]}"; do
   if ! [[ "$index" =~ ^[0-9]+$ ]]; then
-    echo "❌ Seleção inválida: $index. Pulando."
+    echo "❌ Seleção inválida: $index."
     continue
   fi
 
   if (( index < 1 || index > ${#AVAILABLE_APPS[@]} )); then
-    echo "❌ Número fora do intervalo: $index. Pulando."
+    echo "❌ Número fora do intervalo: $index."
     continue
   fi
 
@@ -75,28 +71,37 @@ for index in "${selections[@]}"; do
   echo "🔧 Criando volume em $DOCKER_VOLUME"
   mkdir -p "$DOCKER_VOLUME"
 
-  # Verifica se container existe
-  if docker ps -a --format '{{.Names}}' | grep -qw "$app"; then
-    echo "⚠️ O container \"$app\" já existe."
-    read -rp "❓ Deseja reinstalar o container \"$app\"? (s/N): " answer < /dev/tty
-    if [[ "$answer" =~ ^[Ss]$ ]]; then
-      docker compose -f "$APPS_DIR/$app.yml" down
-      docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
-    else
-      echo "⏩ Pulando $app..."
-    fi
+  running_container=$(docker ps --format '{{.Names}}' | grep -i "^$app\$" || true)
+  existing_container=$(docker ps -a --format '{{.Names}}' | grep -i "^$app\$" || true)
+
+  if [[ -n "$running_container" ]]; then
+    echo "⚠️ O container \"$app\" já está em execução."
+    read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer
+    case "$answer" in
+      [Ss]* )
+        echo "🔄 Reinstalando $label..."
+        docker rm -f "$app"
+        docker compose -f "$APPS_DIR/$app.yml" up -d
+        ;;
+      * )
+        echo "⏩ Pulando $app..."
+        ;;
+    esac
+  elif [[ -n "$existing_container" ]]; then
+    echo "⚠️ O container \"$app\" existe, mas não está rodando."
+    read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer
+    case "$answer" in
+      [Ss]* )
+        echo "🔄 Iniciando/reinstalando $label..."
+        docker rm -f "$app" || true
+        docker compose -f "$APPS_DIR/$app.yml" up -d
+        ;;
+      * )
+        echo "⏩ Pulando $app..."
+        ;;
+    esac
   else
     echo "📥 Instalando $label..."
-    docker compose -f "$APPS_DIR/$app.yml" up -d && ((installed_count++))
+    docker compose -f "$APPS_DIR/$app.yml" up -d
   fi
 done
-
-echo
-
-if (( installed_count == 0 )); then
-  echo "⚠️ Nenhum aplicativo foi instalado."
-elif (( installed_count == 1 )); then
-  echo "✅ 1 aplicativo instalado com sucesso!"
-else
-  echo "✅ $installed_count aplicativos instalados com sucesso!"
-fi
