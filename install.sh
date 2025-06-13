@@ -58,8 +58,6 @@ if [ "${#selections[@]}" -eq 0 ]; then
   exit 1
 fi
 
-installed_count=0
-
 for index in "${selections[@]}"; do
   if ! [[ "$index" =~ ^[0-9]+$ ]]; then
     echo "❌ Seleção inválida: $index."
