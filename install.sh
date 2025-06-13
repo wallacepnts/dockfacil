@@ -36,7 +36,6 @@ AVAILABLE_APPS=()
 AVAILABLE_LABELS=()
 
 while IFS=',' read -r app label; do
-
   if [[ "$app" == "app" ]]; then
     continue
   fi
@@ -73,7 +72,9 @@ for index in "${selections[@]}"; do
   label="${AVAILABLE_LABELS[$((index-1))]}"
   export DOCKER_VOLUME="$BASE_VOLUME/$app"
 
-  echo
+  existing_container=$(docker ps -a --filter "name=^/${app}$" --format "{{.Status}}")
+
+  if [[ -n "$existing_container" && "$existing_container" == Up* ]]; then
     read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer < /dev/tty
     case "$answer" in
       [Ss]* )
@@ -90,14 +91,6 @@ for index in "${selections[@]}"; do
     read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer < /dev/tty
     case "$answer" in
       [Ss]* )
-        echo "🔄 Iniciando/reinstalando $label..."
-        docker rm -f "$app" || true
-        docker compose -f "$APPS_DIR/$app.yml" up -d
-        ;;
-      * )
-        echo "⏩ Pulando $app..."
-        ;;
-    esac
         echo "🔄 Iniciando/reinstalando $label..."
         docker rm -f "$app" || true
         docker compose -f "$APPS_DIR/$app.yml" up -d
