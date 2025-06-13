@@ -9,7 +9,15 @@ CSV_FILE="$APPS_DIR/apps.csv"
 echo "📦 Baixando arquivos docker-compose e lista de apps..."
 mkdir -p "$APPS_DIR"
 
-curl -fsSL "$CSV_URL" -o "$CSV_FILE"
+if ! curl -fsSL "$CSV_URL" -o "$CSV_FILE"; then
+  echo "❌ Falha ao baixar a lista de apps."
+  exit 1
+fi
+
+if [ ! -s "$CSV_FILE" ]; then
+  echo "❌ O arquivo de apps está vazio ou não existe."
+  exit 1
+fi
 
 tail -n +2 "$CSV_FILE" | while IFS=',' read -r app label; do
   app=$(echo "$app" | xargs)
@@ -68,15 +76,7 @@ for index in "${selections[@]}"; do
   export DOCKER_VOLUME="$BASE_VOLUME/$app"
 
   echo
-  echo "🔧 Criando volume em $DOCKER_VOLUME"
-  mkdir -p "$DOCKER_VOLUME"
-
-  running_container=$(docker ps --format '{{.Names}}' | grep -i "^$app\$" || true)
-  existing_container=$(docker ps -a --format '{{.Names}}' | grep -i "^$app\$" || true)
-
-  if [[ -n "$running_container" ]]; then
-    echo "⚠️ O container \"$app\" já está em execução."
-    read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer
+    read -rp "Deseja reinstalar (parar, remover e subir novamente) o $label? (s/N): " answer < /dev/tty
     case "$answer" in
       [Ss]* )
         echo "🔄 Reinstalando $label..."
@@ -89,9 +89,17 @@ for index in "${selections[@]}"; do
     esac
   elif [[ -n "$existing_container" ]]; then
     echo "⚠️ O container \"$app\" existe, mas não está rodando."
-    read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer
+    read -rp "Deseja iniciar/reinstalar o $label? (s/N): " answer < /dev/tty
     case "$answer" in
       [Ss]* )
+        echo "🔄 Iniciando/reinstalando $label..."
+        docker rm -f "$app" || true
+        docker compose -f "$APPS_DIR/$app.yml" up -d
+        ;;
+      * )
+        echo "⏩ Pulando $app..."
+        ;;
+    esac
         echo "🔄 Iniciando/reinstalando $label..."
         docker rm -f "$app" || true
         docker compose -f "$APPS_DIR/$app.yml" up -d
