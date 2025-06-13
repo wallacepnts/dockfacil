@@ -14,7 +14,7 @@ services:
       - TZ=America/Sao_Paulo
     volumes:
       - ${DOCKER_VOLUME}:/config
-      - ${DOWNLOADS}:/downloads
+      - /home/wallace/media/downloads:/downloads
     ports:
       - 8112:8112
       - 6881:6881
